@@ -1,0 +1,38 @@
+/* card vignettes: hover motion comes from the card (`.group`) they sit in */
+.vg-svg { overflow: visible; }
+
+.iso-svg .vg-ink {
+  fill: none;
+  stroke: var(--anatomy-strong);
+  stroke-width: 1.3;
+  vector-effect: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.vg-live {
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: .42;
+  transition: stroke-dashoffset 900ms var(--anatomy-ease) 120ms;
+}
+.group:hover .vg-live,
+.group:focus-visible .vg-live { stroke-dashoffset: 0; }
+
+/* the stylus waits a little above the slate, and comes down on hover */
+.vg-lift {
+  transform: translate(var(--vg-lift));
+  transition: transform 520ms var(--anatomy-ease);
+}
+.group:hover .vg-lift,
+.group:focus-visible .vg-lift { transform: translate(0, 0); }
+
+/* the photo stands in the slot, and is fed in on hover; the LED lights as it goes */
+.vg-sink { transition: transform 700ms var(--anatomy-ease); }
+.group:hover .vg-sink,
+.group:focus-visible .vg-sink { transform: translate(var(--vg-sink)); }
+.vg-void { fill: var(--anatomy-shade-0); }
+.vg-led .iso-top { transition: fill 300ms ease 300ms; }
+.group:hover .vg-led .iso-top { fill: var(--anatomy-lit); }
+
+@media (prefers-reduced-motion: reduce) {
+  .vg-live, .vg-lift, .vg-sink, .vg-led .iso-top { transition: none; }
+}
