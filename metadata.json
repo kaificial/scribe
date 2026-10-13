@@ -1,7 +1,0 @@
-{
-  "name": "TeXify",
-  "description": "Converts hand-drawn formulas and images into LaTeX code.",
-  "requestFramePermissions": [
-    "camera"
-  ]
-}
