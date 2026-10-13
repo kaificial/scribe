@@ -11,6 +11,9 @@ const ERROR_MESSAGES: Record<number, string> = {
     502: 'Cloud AI is temporarily unavailable. Try local mode.',
 };
 
+// marks an error as already having a user-safe message, so it can be re-thrown as-is
+class UserFacingError extends Error {}
+
 export async function convertImageViaCloud(imageDataUrl: string): Promise<string> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -23,20 +26,21 @@ export async function convertImageViaCloud(imageDataUrl: string): Promise<string
             signal: controller.signal,
         });
 
-        const data = await response.json();
+        // response body isn't guaranteed to be JSON (e.g. a gateway error page), so parse defensively
+        const data = await response.json().catch(() => null);
 
         if (!response.ok) {
-            const message = ERROR_MESSAGES[response.status] || data.error || 'Failed to process image.';
-            throw new Error(message);
+            const message = ERROR_MESSAGES[response.status] || data?.error || 'Failed to process image.';
+            throw new UserFacingError(message);
         }
 
-        return data.latex || '';
+        return data?.latex || '';
     } catch (err: unknown) {
         if (err instanceof DOMException && err.name === 'AbortError') {
             throw new Error('Request timed out. Please try again.');
         }
-        // re-throw if it's already our formatted error
-        if (err instanceof Error) throw err;
+        // re-throw if it's already our formatted error; anything else (network/parse failures) gets a generic message
+        if (err instanceof UserFacingError) throw err;
         throw new Error('Failed to process image.');
     } finally {
         clearTimeout(timeout);
