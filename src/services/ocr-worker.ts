@@ -7,30 +7,26 @@ let ocrPipeline: any = null;
 
 env.allowLocalModels = false;
 
+// loads the model if it isn't already loaded; throws on failure so callers can report it
 const init = async () => {
     if (ocrPipeline) return;
 
     self.postMessage({ status: 'loading', message: 'initializing texify model...' });
 
-    try {
-        // texify works better for math formulas
-        ocrPipeline = await pipeline('image-to-text', 'Xenova/texify', {
-            dtype: 'q8',
-            progress_callback: (progress: any) => {
-                if (progress.status === 'progress') {
-                    self.postMessage({
-                        status: 'download_progress',
-                        message: `downloading ${progress.file}...`,
-                        progress: progress.progress,
-                        file: progress.file
-                    });
-                }
+    // texify works better for math formulas
+    ocrPipeline = await pipeline('image-to-text', 'Xenova/texify', {
+        dtype: 'q8',
+        progress_callback: (progress: any) => {
+            if (progress.status === 'progress') {
+                self.postMessage({
+                    status: 'download_progress',
+                    message: `downloading ${progress.file}...`,
+                    progress: progress.progress,
+                    file: progress.file
+                });
             }
-        });
-        self.postMessage({ status: 'ready', message: 'ai ready' });
-    } catch (error: any) {
-        self.postMessage({ status: 'error', message: error.message });
-    }
+        }
+    });
 };
 
 const preprocessImage = async (imageSource: string): Promise<RawImage> => {
@@ -44,16 +40,21 @@ self.onmessage = async (event) => {
     const { type, id, image } = event.data;
 
     if (type === 'init') {
-        await init();
+        try {
+            await init();
+            self.postMessage({ status: 'ready', id, message: 'ai ready' });
+        } catch (error: any) {
+            self.postMessage({ status: 'error', id, message: error.message });
+        }
         return;
     }
 
     if (type === 'process') {
-        if (!ocrPipeline) {
-            await init();
-        }
-
         try {
+            if (!ocrPipeline) {
+                await init();
+            }
+
             self.postMessage({ status: 'processing', message: 'analyzing formula...' });
 
             const processedImage = await preprocessImage(image);

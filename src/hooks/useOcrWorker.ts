@@ -6,22 +6,22 @@ import type { ProcessingMode } from '../types';
 interface OcrWorkerState {
     status: string;
     progress: number;
-    isReady: boolean;
 }
 
 export function useOcrWorker(mode: ProcessingMode = 'local') {
     const [state, setState] = useState<OcrWorkerState>({
         status: '',
         progress: 0,
-        isReady: false,
     });
 
-    // only needed for local mode (downloads the model)
-    const init = useCallback(() => {
-        if (mode === 'cloud') return;
+    // only needed for local mode (downloads the model). Resolves once the model
+    // is actually ready - callers must await this before convert() for local mode,
+    // so a 'process' request never races the initial model download.
+    const init = useCallback((): Promise<void> => {
+        if (mode === 'cloud') return Promise.resolve();
 
-        initLocalAI(
-            (message) => setState(prev => ({ ...prev, status: message, isReady: message === 'ai ready' })),
+        return initLocalAI(
+            (message) => setState(prev => ({ ...prev, status: message })),
             (progress) => setState(prev => ({ ...prev, progress })),
         );
     }, [mode]);
@@ -35,7 +35,6 @@ export function useOcrWorker(mode: ProcessingMode = 'local') {
     }, [mode]);
 
     // cloud is always "ready" (no model to download)
-    const isReady = mode === 'cloud' ? true : state.isReady;
     const status = mode === 'cloud' ? 'Cloud AI ready' : state.status;
 
     return {
@@ -43,7 +42,5 @@ export function useOcrWorker(mode: ProcessingMode = 'local') {
         init,
         status,
         progress: state.progress,
-        isReady,
-        mode,
     };
 }

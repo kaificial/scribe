@@ -130,6 +130,12 @@ const FormulaTool: React.FC = () => {
         setError(null);
         setProcessedImage(dataUrl);
         try {
+            // for local mode, make sure the model is actually loaded before sending a
+            // process request - otherwise the first-ever request races the initial
+            // model download inside the worker
+            if (mode === 'local') {
+                await ocr.init();
+            }
             const result = await ocr.convert(dataUrl);
             setLatex(result);
             setState(AppState.RESULT);
@@ -150,8 +156,6 @@ const FormulaTool: React.FC = () => {
 
     const handleConfirmProcess = () => {
         setShowConfirmation(false);
-        // only init the local model for local mode
-        if (mode === 'local') ocr.init();
         if (pendingImageData) {
             handleProcessWithImage(pendingImageData);
             setPendingImageData(null);
