@@ -49,6 +49,5 @@ export function useCanvasHistory(canvasRef: RefObject<HTMLCanvasElement | null>)
         reset,
         canUndo: index > 0,
         canRedo: index < snapshots.length - 1,
-        isEmpty: snapshots.length === 0,
     };
 }
