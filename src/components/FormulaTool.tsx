@@ -11,6 +11,7 @@ import { ResultView } from './result/ResultView';
 import { HistoryGallery } from './history/HistoryGallery';
 import { ConfirmationModal } from './ui/ConfirmationModal';
 import { AppState, type HistoryItem, type ProcessingMode } from '../types';
+import { thresholdPixels, findContentBoundingBox, computeScaledDimensions } from '../utils/imageProcessing';
 
 const FormulaTool: React.FC = () => {
     const [state, setState] = useState<AppState>(AppState.IDLE);
@@ -41,14 +42,11 @@ const FormulaTool: React.FC = () => {
         return new Promise((resolve) => {
             const img = new Image();
             img.onload = () => {
-                let { width, height } = img;
-                if (width <= maxDim && height <= maxDim) {
+                const { width, height } = computeScaledDimensions(img.width, img.height, maxDim);
+                if (width === img.width && height === img.height) {
                     resolve(dataUrl);
                     return;
                 }
-                const ratio = Math.min(maxDim / width, maxDim / height);
-                width = Math.floor(width * ratio);
-                height = Math.floor(height * ratio);
                 const canvas = document.createElement('canvas');
                 canvas.width = width;
                 canvas.height = height;
@@ -89,12 +87,7 @@ const FormulaTool: React.FC = () => {
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return canvas;
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        for (let i = 0; i < data.length; i += 4) {
-            const luminance = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-            const v = luminance < 180 ? 0 : 255;
-            data[i] = v; data[i + 1] = v; data[i + 2] = v;
-        }
+        thresholdPixels(imageData.data);
         ctx.putImageData(imageData, 0, 0);
         return canvas;
     };
@@ -103,32 +96,14 @@ const FormulaTool: React.FC = () => {
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return canvas;
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const { data, width, height } = imageData;
-        let minX = width, minY = height, maxX = 0, maxY = 0, found = false;
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                if (data[(y * width + x) * 4 + 3] > 0) {
-                    if (x < minX) minX = x; if (x > maxX) maxX = x;
-                    if (y < minY) minY = y; if (y > maxY) maxY = y;
-                    found = true;
-                }
-            }
-        }
-        if (!found) return null;
-        const p = 40;
-        minX = Math.max(0, minX - p); minY = Math.max(0, minY - p);
-        maxX = Math.min(width, maxX + p); maxY = Math.min(height, maxY + p);
+        const bbox = findContentBoundingBox(imageData, 40);
+        if (!bbox) return null;
+        const { minX, minY, maxX, maxY } = bbox;
         const cw = maxX - minX, ch = maxY - minY;
-        
+
         // Resize if too large to save tokens
         const MAX_DIM = 512;
-        let finalWidth = cw;
-        let finalHeight = ch;
-        if (cw > MAX_DIM || ch > MAX_DIM) {
-            const ratio = Math.min(MAX_DIM / cw, MAX_DIM / ch);
-            finalWidth = Math.floor(cw * ratio);
-            finalHeight = Math.floor(ch * ratio);
-        }
+        const { width: finalWidth, height: finalHeight } = computeScaledDimensions(cw, ch, MAX_DIM);
 
         const cropped = document.createElement('canvas');
         cropped.width = finalWidth; cropped.height = finalHeight;
