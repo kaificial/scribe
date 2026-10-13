@@ -4,8 +4,8 @@ import Anthropic from '@anthropic-ai/sdk';
 // rate limit: 100 requests per IP per 15 min window
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_REQUESTS = 100;
-const MAX_BODY_BYTES = 4 * 1024 * 1024; // 4 MB
-const ALLOWED_MIME = ['image/png', 'image/jpeg', 'image/webp'];
+export const MAX_BODY_BYTES = 4 * 1024 * 1024; // 4 MB
+export const ALLOWED_MIME = ['image/png', 'image/jpeg', 'image/webp'];
 
 // allowed origins for CORS (update with your production domain)
 const ALLOWED_ORIGINS = [
@@ -23,7 +23,7 @@ function getClientIP(req: VercelRequest): string {
     return req.socket?.remoteAddress || 'unknown';
 }
 
-function isRateLimited(ip: string): { limited: boolean; retryAfter?: number } {
+export function isRateLimited(ip: string): { limited: boolean; retryAfter?: number } {
     const now = Date.now();
     const entry = rateLimitMap.get(ip);
 
@@ -43,8 +43,8 @@ function isRateLimited(ip: string): { limited: boolean; retryAfter?: number } {
 }
 
 // pull mime type and raw base64 from a data url
-function parseDataUrl(dataUrl: string): { mime: string; base64: string } | null {
-    const match = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/s);
+export function parseDataUrl(dataUrl: string): { mime: string; base64: string } | null {
+    const match = dataUrl.match(/^data:(image\/[\w.+-]+);base64,(.+)$/s);
     if (!match) return null;
     return { mime: match[1], base64: match[2] };
 }
