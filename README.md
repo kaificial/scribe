@@ -1,3 +1,5 @@
+<img src="/assets/logo.svg" width="56" height="56" alt="Scribe logo">
+
 # Scribe
 
 > Hand-drawn math, instantly turned into LaTeX.
@@ -64,7 +66,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 npm run dev
 ```
 
-Then open [http://localhost:5173](http://localhost:5173).
+Then open [http://localhost:3000](http://localhost:3000).
 
 > First time using Local AI mode, the browser needs to download the model so give it a minute depending on your internet speed. After that it's cached and starts instantly.
 
