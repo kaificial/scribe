@@ -1,0 +1,41 @@
+/* transcription bench: figure tokens and styles */
+.sb {
+  --sb-graphite: #8f8f95;
+  --sb-ink: #0b0b0d;
+  outline: none;
+  touch-action: pan-y;
+  border-radius: 6px;
+}
+.iso:not([data-theme="light"]) .sb { --sb-graphite: #6c6c70; --sb-ink: #f2f2f2; }
+
+.sb:focus-visible { outline: 1px solid var(--anatomy-muted); outline-offset: 6px; }
+.sb[data-mode="tour"] { cursor: ew-resize; }
+
+/* handwriting: soft graphite while it is raw, solid ink once thresholded */
+.sb .sb-ink {
+  fill: none;
+  stroke: var(--sb-graphite);
+  stroke-width: 1.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: .85;
+}
+.sb .sb-ink[data-crisp] { stroke: var(--sb-ink); stroke-width: 1.35px; opacity: 1; stroke-linecap: square; }
+
+/* the processed image on the slate: greyed until scanned, hard black and white after */
+.sb .sb-image { filter: grayscale(1) contrast(.55) brightness(1.08); opacity: .7; mix-blend-mode: multiply; }
+.sb .sb-image[data-crisp] { filter: grayscale(1) contrast(6); opacity: 1; }
+
+/* the scan lamp's line of light on the slate */
+.sb .sb-lamp { stroke-width: 1.4px; }
+
+/* the slot the slip feeds out of */
+.sb .sb-void { fill: var(--anatomy-shade-0); }
+
+/* lit stylus button and LED glow a little brighter than the kit's lit fill */
+.sb [data-part="led"] > .iso-solid[data-lit] > .iso-top { fill: var(--anatomy-lit); }
+
+@media (max-width: 560px) {
+  .sb .iso-svg { width: 116%; margin-left: -8%; }
+}
