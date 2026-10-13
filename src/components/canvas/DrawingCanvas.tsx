@@ -54,7 +54,7 @@ export function DrawingCanvas({ canvasRef, isEraser, strokeSize, onStrokeEnd }: 
         <div ref={containerRef} className="relative w-full h-[500px]">
             <canvas
                 ref={canvasRef}
-                className="w-full h-full border border-slate-100 bg-white rounded-xl cursor-crosshair touch-none"
+                className="w-full h-full border border-zinc-200 bg-white rounded-xl cursor-crosshair touch-none"
                 onMouseDown={startDrawing}
                 onMouseMove={draw}
                 onMouseUp={endDrawing}
@@ -63,7 +63,7 @@ export function DrawingCanvas({ canvasRef, isEraser, strokeSize, onStrokeEnd }: 
                 onTouchMove={draw}
                 onTouchEnd={endDrawing}
             />
-            <div className="absolute bottom-4 right-4 text-[10px] uppercase tracking-widest text-slate-200 pointer-events-none italic">Canvas</div>
+            <div className="absolute bottom-3 right-4 text-[13px] font-medium text-zinc-300 pointer-events-none">Draw here</div>
         </div>
     );
 }

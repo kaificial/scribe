@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import katex from 'katex';
+import { useCopied } from '../ui/micro';
 
 interface Props {
     latex: string;
@@ -8,20 +9,26 @@ interface Props {
     onBack: () => void;
 }
 
+// strips $...$, $$...$$, \(...\) and \[...\] wrappers so KaTeX gets the bare expression
+function stripMathDelimiters(latex: string) {
+    return latex
+        .replace(/^(\$|\\\[|\\\(|\$\$)/g, '')
+        .replace(/(\$|\\\]|\\\)| \$\$)$/g, '')
+        .trim();
+}
+
 export function ResultView({ latex, processedImage, onLatexChange, onBack }: Props) {
     const previewRef = useRef<HTMLDivElement>(null);
+    const [copied, flashCopied] = useCopied();
 
     useEffect(() => {
         if (!previewRef.current) return;
-        const sanitized = latex
-            .replace(/^(\$|\\\[|\\\(|\$\$)/g, '')
-            .replace(/(\$|\\\]|\\\)| \$\$)$/g, '')
-            .trim();
+        const sanitized = stripMathDelimiters(latex);
         try {
             if (sanitized) {
                 katex.render(sanitized, previewRef.current, { throwOnError: false, displayMode: true });
             } else {
-                previewRef.current.innerHTML = '<span class="text-gray-300">Preview area</span>';
+                previewRef.current.innerHTML = '<span class="text-sm text-zinc-300">Preview appears here</span>';
             }
         } catch (e) {
             console.error('KaTeX error', e);
@@ -30,44 +37,47 @@ export function ResultView({ latex, processedImage, onLatexChange, onBack }: Pro
 
     return (
         <>
-            <div className="p-8 flex flex-col md:flex-row gap-8">
-                <div className="flex-1 space-y-6">
-                    <div className="flex justify-between items-baseline px-1">
-                        <h3 className="text-[10px] uppercase tracking-widest text-slate-400">Generated LaTeX</h3>
+            <div className="p-4 md:p-6 flex flex-col md:flex-row gap-6">
+                <div className="flex-1 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h3 className="ui-label">LaTeX</h3>
                         <button
-                            onClick={() => navigator.clipboard.writeText(latex)}
-                            className="px-4 py-1.5 bg-slate-900 text-white text-[10px] uppercase tracking-widest rounded-lg hover:bg-slate-800 transition-all"
+                            onClick={() => { navigator.clipboard.writeText(latex); flashCopied(); }}
+                            className="ui-btn ui-btn-sm min-w-[7.5rem]"
+                            aria-live="polite"
                         >
-                            Copy LaTeX
+                            {copied ? <span key="done" className="check-pop">Copied ✓</span> : 'Copy LaTeX'}
                         </button>
                     </div>
-                    <textarea
-                        value={latex}
-                        onChange={(e) => onLatexChange(e.target.value)}
-                        className="w-full h-32 p-4 bg-slate-50 border border-slate-100 rounded-xl font-mono text-xs resize-none focus:outline-none focus:ring-1 focus:ring-slate-200 transition-all text-slate-600"
-                        placeholder="No data available..."
-                    />
+                    <div className="copy-flash rounded-xl" data-flash={copied ? '' : undefined}>
+                        <textarea
+                            value={latex}
+                            onChange={(e) => onLatexChange(e.target.value)}
+                            className="w-full h-32 p-4 bg-zinc-950 border border-zinc-950 rounded-xl font-mono text-xs resize-none focus:outline-none focus:ring-2 focus:ring-brand/40 transition-all text-zinc-100 caret-brand"
+                            placeholder="No data available..."
+                        />
+                    </div>
                     <button
                         onClick={onBack}
-                        className="w-full py-3 text-[10px] uppercase tracking-[0.2em] border border-slate-100 text-slate-400 rounded-xl hover:bg-slate-50 transition-all"
+                        className="ui-btn-ghost w-full"
                     >
-                        New Trial
+                        Convert another
                     </button>
                 </div>
 
                 <div className="flex-1 flex flex-col">
-                    <h3 className="text-[10px] uppercase tracking-widest text-slate-400 mb-6 px-1">Compiled Output</h3>
-                    <div className="flex-1 min-h-[220px] border border-slate-100 rounded-xl bg-white shadow-sm flex items-center justify-center p-8 overflow-auto">
-                        <div ref={previewRef} className="text-2xl text-slate-900" />
+                    <h3 className="ui-label mb-4">Preview</h3>
+                    <div className="flex-1 min-h-[220px] border border-zinc-200 rounded-xl bg-white flex items-center justify-center p-8 overflow-auto">
+                        <div ref={previewRef} className="latex-preview text-2xl text-zinc-950" />
                     </div>
                 </div>
             </div>
 
             {processedImage && (
-                <div className="px-8 pb-8">
-                    <h3 className="text-[10px] uppercase tracking-widest text-slate-400 mb-4 px-1">Original Input</h3>
-                    <div className="border border-slate-100 rounded-xl bg-slate-50 p-4 flex items-center justify-center">
-                        <img src={processedImage} alt="Original input" className="max-h-48 rounded-lg object-contain" />
+                <div className="px-4 md:px-6 pb-6">
+                    <h3 className="ui-label mb-4">Your input</h3>
+                    <div className="border border-zinc-200 rounded-xl bg-zinc-50 p-4 flex items-center justify-center">
+                        <img src={processedImage} alt="Original input" className="max-h-48 rounded object-contain" />
                     </div>
                 </div>
             )}
