@@ -3,7 +3,7 @@ export enum AppState {
   IDLE = 'IDLE',
   DRAWING = 'DRAWING',
   PROCESSING = 'PROCESSING',
-  RESULT = 'BOOM'
+  RESULT = 'RESULT'
 }
 
 export interface HistoryItem {
