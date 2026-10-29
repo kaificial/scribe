@@ -162,5 +162,3 @@ src/
 ## License
 
 MIT. Do whatever you want with it. 
-
-<img src="/assets/readme/wordmark.svg" width="100%" alt="Scribe">
