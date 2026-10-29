@@ -1,7 +1,5 @@
 <img src="/assets/readme/banner.svg" width="100%" alt="Scribe: write the math by hand, paste it as LaTeX. A handwritten quadratic formula, the LaTeX Scribe returns for it, and how that renders.">
 
-![Scribe](/assets/image.png)
-
 I got tired of retyping equations from my notes so I built this. Draw an equation, take a picture of one, or paste a screenshot of your notebook, and Scribe gives you LaTeX you can drop straight into Overleaf, Notion, your thesis, etc. You see a live preview of the result and can fix it by hand if the model gets something slightly wrong.
 
 There's nothing to install. It's a website with a canvas and a model behind it.
