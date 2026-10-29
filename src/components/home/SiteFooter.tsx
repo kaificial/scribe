@@ -21,7 +21,7 @@ export function SiteFooter() {
                 </div>
             </div>
             {/* oversized wordmark, cropped by the page edge */}
-            <InkWordmark text="Scribe." className="justify-center text-center serif-classic italic font-light leading-[0.78] tracking-[-0.05em] text-[24vw] mt-10 -mb-[4vw]" />
+            <InkWordmark text="Scribe." className="justify-center text-center hand leading-[0.78] tracking-[-0.02em] text-[30vw] mt-10 -mb-[4vw]" />
         </footer>
     );
 }

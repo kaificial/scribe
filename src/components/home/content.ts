@@ -8,19 +8,25 @@ export const PORTFOLIO_URL = 'https://kaificial.vercel.app';
 
 /** Sections the nav links to and tracks, in page order. */
 export const NAV: Array<{ id: string; label: string }> = [
-    { id: 'research', label: 'Research' },
-    { id: 'console', label: 'Console' },
-    { id: 'model-card', label: 'Model card' },
+    { id: 'research', label: 'How it works' },
+    { id: 'console', label: 'Try it' },
+    { id: 'model-card', label: 'Models' },
     { id: 'privacy', label: 'Privacy' },
 ];
 export const SECTION_IDS = NAV.map((item) => item.id);
 
+/** The example in the hero: what you write and what Scribe gives back. */
+export const SPECIMEN = {
+    handwritten: 'x = −b ± √(b²−4ac) / 2a',
+    latex: String.raw`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`,
+};
+
 /** The bench's four stations, in the order it runs them. */
 export const STATIONS: Array<{ title: string; body: string; phases: Phase[] }> = [
-    { title: 'Write', body: 'Ink arrives from the canvas, a photo, or the clipboard.', phases: ['reach', 'write', 'park'] },
-    { title: 'Crop', body: 'The frame is cut to the ink’s bounding box, plus a 40 px margin.', phases: ['crop'] },
-    { title: 'Threshold', body: 'Anything darker than 180 becomes solid black; the crop is scaled to at most 512 px.', phases: ['scan'] },
-    { title: 'Transcribe', body: 'Texify on your device, or Claude in the cloud, writes the LaTeX.', phases: ['print', 'done'] },
+    { title: 'Write', body: 'You draw on the canvas, upload a photo, or paste a screenshot.', phases: ['reach', 'write', 'park'] },
+    { title: 'Crop', body: 'Scribe trims the image to the ink and leaves a 40 px border, so the model sees the equation and nothing else.', phases: ['crop'] },
+    { title: 'Clean', body: 'Pixels darker than 180 turn solid black and the rest turn white. The image is then scaled to 512 px at most.', phases: ['scan'] },
+    { title: 'Transcribe', body: 'Texify reads it in your browser, or Claude reads it in the cloud, and the LaTeX comes back.', phases: ['print', 'done'] },
 ];
 
 export type StationState = 'queued' | 'active' | 'done';
@@ -34,26 +40,25 @@ export function stationStates(phase: Phase): StationState[] {
 }
 
 export const FACTS: Array<[string, string]> = [
-    ['Input', 'Canvas · photo · clipboard'],
-    ['Output', 'LaTeX + live KaTeX preview'],
-    ['Models', 'Xenova/texify · Claude'],
-    ['Pre-processing', 'crop +40 px → threshold 180 → ≤ 512 px'],
-    ['Data', 'On-device by default'],
+    ['Reads', 'Drawings, photos, screenshots'],
+    ['Returns', 'LaTeX, with a live preview'],
+    ['Runs', 'In your browser, or in the cloud'],
+    ['Costs', 'Nothing. It’s open source'],
 ];
 
 export const MODEL_CARD: Array<[string, string, string]> = [
     ['Model', 'Xenova/texify', 'Claude (Anthropic)'],
     ['Runs on', 'Your browser, via Transformers.js + WebGPU', 'A Vercel serverless function'],
-    ['Image leaves your device', 'No', 'Yes — over HTTPS'],
+    ['Image leaves your device', 'No', 'Yes, over HTTPS'],
     ['Image stored', 'Never', 'Never'],
     ['First run', 'One-time model download (a few hundred MB)', 'Instant'],
     ['Chosen by default when', 'WebGPU is available', 'WebGPU is unavailable'],
 ];
 
 export const PRIVACY_POINTS: Array<[string, string]> = [
-    ['On-device first', 'When your browser supports WebGPU, recognition runs locally and nothing leaves your machine.'],
-    ['Nothing retained', 'In Cloud mode the cropped image is sent over HTTPS to be transcribed, and no data is kept.'],
-    ['History stays local', 'Past conversions live in IndexedDB in your own browser, and you can clear them anytime.'],
+    ['Local comes first', 'If your browser supports WebGPU, the model runs on your machine and the image never leaves it.'],
+    ['Cloud keeps nothing', 'In Cloud mode the cropped image goes to the server over HTTPS, gets transcribed, and is thrown away.'],
+    ['History lives here', 'Past conversions are saved in this browser’s IndexedDB. Clear them whenever you like.'],
 ];
 
 export const CITATION = `@software{scribe,

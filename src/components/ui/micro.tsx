@@ -33,6 +33,79 @@ export function useReveal() {
     }, []);
 }
 
+const easeInOutQuart = (t: number) => (t < 0.5 ? 8 * t ** 4 : 1 - (-2 * t + 2) ** 4 / 2);
+
+/**
+ * Smoothly scrolls to `#links` instead of jumping. When the scroll ends, the
+ * target gets `data-arrived` so CSS can play a short animation.
+ * Scrolling, touching or pressing a key stops it early.
+ */
+export function useSmoothAnchors() {
+    useEffect(() => {
+        let frame = 0;
+        let arrived: HTMLElement | null = null;
+        let arriveTimer = 0;
+        const stop = () => { cancelAnimationFrame(frame); frame = 0; };
+
+        const land = (el: HTMLElement) => {
+            arrived?.removeAttribute('data-arrived');
+            window.clearTimeout(arriveTimer);
+            void el.offsetWidth; // lets the animation replay on the same section
+            el.setAttribute('data-arrived', '');
+            arrived = el;
+            arriveTimer = window.setTimeout(() => el.removeAttribute('data-arrived'), 1400);
+            el.focus({ preventScroll: true });
+        };
+
+        const onClick = (e: MouseEvent) => {
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const link = (e.target as Element | null)?.closest<HTMLAnchorElement>('a[href^="#"]');
+            const hash = link?.getAttribute('href') ?? '';
+            const el = hash.length > 1 ? document.getElementById(decodeURIComponent(hash.slice(1))) : null;
+            if (!el) return;
+            e.preventDefault();
+            history.pushState(null, '', hash);
+            if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+
+            const margin = parseFloat(getComputedStyle(el).scrollMarginTop) || 0;
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            const from = window.scrollY;
+            const to = Math.max(0, Math.min(max, el.getBoundingClientRect().top + from - margin));
+            const distance = Math.abs(to - from);
+            if (still() || distance < 2) {
+                window.scrollTo({ top: to, behavior: 'instant' });
+                land(el);
+                return;
+            }
+            // farther targets take a bit longer, up to 1.3s
+            const duration = Math.min(1300, 520 + distance * 0.22);
+            const start = performance.now();
+            stop();
+            const step = (now: number) => {
+                const t = Math.min(1, (now - start) / duration);
+                window.scrollTo({ top: from + (to - from) * easeInOutQuart(t), behavior: 'instant' });
+                if (t < 1) frame = requestAnimationFrame(step);
+                else { frame = 0; land(el); }
+            };
+            frame = requestAnimationFrame(step);
+        };
+
+        const interrupt = () => { if (frame) stop(); };
+        document.addEventListener('click', onClick);
+        window.addEventListener('wheel', interrupt, { passive: true });
+        window.addEventListener('touchstart', interrupt, { passive: true });
+        window.addEventListener('keydown', interrupt);
+        return () => {
+            document.removeEventListener('click', onClick);
+            window.removeEventListener('wheel', interrupt);
+            window.removeEventListener('touchstart', interrupt);
+            window.removeEventListener('keydown', interrupt);
+            window.clearTimeout(arriveTimer);
+            stop();
+        };
+    }, []);
+}
+
 /** Elements with `[data-magnetic]` lean a few pixels toward the pointer, then spring back. */
 export function useMagnetic(strength = 0.22, reach = 5) {
     useEffect(() => {
@@ -200,4 +273,13 @@ export function useCopied<T = true>(ms = 1600) {
         timer.current = window.setTimeout(() => setCopied(null), ms);
     };
     return [copied, flash] as const;
+}
+
+/** A small "Copy" text button that shows "Copied ✓" for a moment after it's clicked. */
+export function CopyButton({ copied, onClick, className = '' }: { copied: boolean; onClick: () => void; className?: string }) {
+    return (
+        <button onClick={onClick} className={`font-mono text-[11px] uppercase tracking-[0.08em] text-zinc-500 hover:text-zinc-950 transition-colors ${className}`}>
+            {copied ? <span key="done" className="check-pop">Copied ✓</span> : 'Copy'}
+        </button>
+    );
 }

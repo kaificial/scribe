@@ -9,6 +9,9 @@
   --brand: #0b0b0c;
   --brand-soft: #fff8d6;
   --highlight: #fff0a6;
+  --marker: #f3d34a;
+  --marker-line: linear-gradient(90deg, var(--marker), #f7e27a);
+  --font-hand: "Nanum Pen Script", "Segoe Print", cursive;
   --ease-out: cubic-bezier(.2, .8, .2, 1);
   --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
 }
@@ -17,7 +20,6 @@ body {
   background-color: #fcfcfc;
   color: var(--ink);
   overflow-x: hidden;
-  font-feature-settings: "ss01", "cv11";
 }
 
 ::selection { background: var(--highlight); color: var(--ink); }
@@ -107,8 +109,8 @@ body {
 
   /* margin notes, in a researcher's hand */
   .note {
-    font-family: Caveat, "Segoe Print", cursive;
-    @apply text-[22px] leading-[1.05] text-zinc-500;
+    font-family: var(--font-hand);
+    @apply text-[26px] leading-[1.05] text-zinc-500;
   }
 
   /* the "§n" index on section headings */
@@ -124,8 +126,12 @@ body {
 
 /* ---- type ---------------------------------------------------------------------------- */
 
-/* the headline and footer wordmark use Tailwind's default serif stack (Georgia on Windows) */
-.serif-classic { font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; }
+/* the headline serif. STIX Two is the font many journals use for math */
+.serif-classic { font-family: "STIX Two Text", ui-serif, Georgia, serif; }
+
+/* handwriting for emphasis and the footer wordmark. It runs small, so emphasis is sized up to match the serif */
+.hand { font-family: var(--font-hand); font-style: normal; font-weight: 400; }
+em.hand { font-size: 1.2em; line-height: 0.9; }
 
 /* the LaTeX logo in the headline: a small raised A that hops on hover, and a dropped E */
 .tex-logo { white-space: nowrap; cursor: default; }
@@ -135,7 +141,7 @@ body {
 
 /* footer links: body copy style. Nav links: the "Try Scribe" button's type. */
 .nav-link, .nav-link a {
-  font-family: Geist, ui-sans-serif, system-ui, sans-serif;
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: 15px;
   line-height: 1.625;
   color: #52525b;
@@ -152,7 +158,7 @@ header .nav-link, header .nav-link a {
 /* ---- figures -------------------------------------------------------------------------- */
 
 .iso {
-  --anatomy-mono: "Geist Mono", ui-monospace, Menlo, monospace;
+  --anatomy-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 .iso .iso-plate {
   border-radius: 14px;
@@ -164,8 +170,8 @@ header .nav-link, header .nav-link a {
 }
 .iso .iso-figure { margin: 0; }
 .iso .iso-legend { padding: 4px 2px 0; font-size: 12.5px; gap: 10px; }
-.iso .iso-caption { font-family: Newsreader, Georgia, serif; font-size: 16px; line-height: 1.55; color: #52525b; max-width: 62ch; }
-.iso .iso-caption code { font-family: "Geist Mono", ui-monospace, monospace; font-size: 12.5px; color: #18181b; background: #f4f4f5; padding: 1px 5px; border-radius: 4px; }
+.iso .iso-caption { font-family: "STIX Two Text", Georgia, serif; font-size: 16px; line-height: 1.55; color: #52525b; max-width: 62ch; }
+.iso .iso-caption code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; color: #18181b; background: #f4f4f5; padding: 1px 5px; border-radius: 4px; }
 
 /* Figure 1 on the homepage: a paper-style caption, and the bench fills its plate */
 .figure-1 .iso-caption::before { content: "Figure 1. "; font-weight: 600; color: var(--ink); }
@@ -176,6 +182,13 @@ header .nav-link, header .nav-link a {
 .sb-working .iso-plate { box-shadow: 0 0 0 1px #f0f0f1; }
 
 /* method stations follow the bench */
+.station-track { display: block; position: relative; height: 2px; background: #e4e4e7; border-radius: 2px; overflow: hidden; }
+.station-track::after {
+  content: ""; position: absolute; inset: 0; background: var(--ink); transform-origin: left; transform: scaleX(0);
+  transition: transform 600ms cubic-bezier(.65, 0, .25, 1);
+}
+.station[data-state="active"] .station-track::after { transform: scaleX(.5); background: var(--marker); }
+.station[data-state="done"] .station-track::after { transform: scaleX(1); }
 .station[data-state="active"] .hl-live { background-size: 100% 58%; }
 .station .station-state { transition: color 300ms ease; }
 
@@ -204,7 +217,7 @@ header .nav-link, header .nav-link a {
 /* scroll progress along the bottom edge of the nav bar */
 .nav-progress {
   position: absolute; left: 16px; right: 16px; bottom: -1px; height: 2px; border-radius: 2px;
-  background: linear-gradient(90deg, #f3d34a, #f7e27a); transform-origin: left; transform: scaleX(var(--progress, 0));
+  background: var(--marker-line); transform-origin: left; transform: scaleX(var(--progress, 0));
 }
 
 /* logo hover: the integral redraws itself, then the dot pops */
@@ -251,14 +264,42 @@ a:hover .logo-dot { animation: dot-pop 520ms var(--ease-spring) 520ms both; tran
 }
 .ink-wordmark[data-inking] .ink-wordmark-ink { opacity: 1; }
 
+/* sections rise and fade in as they scroll into view, and dim as they leave.
+   It's tied to scroll position, so it reverses when you scroll back up. The hero is left alone. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    main > section:not(:first-child) {
+      animation: section-in linear both, section-out linear both;
+      animation-timeline: view(), view();
+      animation-range: entry 0% entry 65%, exit 35% exit 100%;
+    }
+  }
+}
+@keyframes section-in { from { opacity: 0; transform: translateY(56px) scale(.97); } to { opacity: 1; transform: none; } }
+/* only opacity here, since a transform would break the console's fixed-position modal */
+@keyframes section-out { to { opacity: .3; } }
+
+/* after a nav click, a yellow line sweeps across the section's top border and the title slides up */
+.section-head { position: relative; }
+.section-head::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 2px; border-radius: 2px;
+  background: var(--marker-line); transform-origin: left; transform: scaleX(0); opacity: 0;
+}
+[data-arrived] .section-head::before { animation: arrive-line 1300ms var(--ease-out); }
+[data-arrived] .section-head h2 { animation: arrive-title 700ms var(--ease-spring); }
+[data-arrived]:focus { outline: none; }
+@keyframes arrive-line { 0% { transform: scaleX(0); opacity: 1; } 55% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+@keyframes arrive-title { from { transform: translateY(10px); opacity: .5; } to { transform: none; opacity: 1; } }
+
 /* ---- reduced motion ------------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
   .ui-dot::after { animation: none; }
   .hl { animation: none; background-size: 100% 62%; }
-  .hl-live { transition: none; }
+  .hl-live, .station-track::after { transition: none; }
   [data-reveal] { opacity: 1; transform: none; transition: none; }
   .nav-pill, .seg-pill, .row-sweep, .note-wrap, .ui-btn, .ui-btn-ghost { transition: none; }
   a:hover .logo-stroke, a:hover .logo-dot, .tex-logo:hover .tex-a, .note-wrap:hover .scrawl path, .copy-flash[data-flash]::after, .check-pop { animation: none; }
   .nav-links a::after { transition: none; }
+  [data-arrived] .section-head::before, [data-arrived] .section-head h2 { animation: none; }
 }
